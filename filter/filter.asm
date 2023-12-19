@@ -1,9 +1,9 @@
 section .data
-  file db "text.txt", 0                                 ; arquivo termina com o byte '\0'
+  arquivo db "text.txt", 0                              ; arquivo termina com o byte '\0'
 
 section .bss
-  descriptor_read resb 4                                ; memória pra guardar descritor de leitura
-  descriptor_write resb 4                               ; memória pra guardar descritor de escrita
+  descitor_leitura resb 4                               ; memória pra guardar descritor de leitura
+  descritor_escrita resb 4                              ; memória pra guardar descritor de escrita
   buffer resb 1024                                      ; reserva 1024 bytes de memória para o buffer (reb = reserve bytes)
   len equ 1024                                          ; define len como 1024 (equ = equates)
 
@@ -14,15 +14,15 @@ global _start
 _start:
                                                         ; Abrindo arquivo pra leitura
   mov eax, 5                                            ; sys_open (eax = 5 representa sys_open em x86 linux 32bits)
-  mov ebx, file                                         ; nome do arquivo
+  mov ebx, arquivo                                      ; nome do arquivo
   mov ecx, 0                                            ; O_RDONLY
   int 0x80                                              ; abre o arquivo com permissão de 'read only' (0 da linha acima)
 
-  mov [descriptor_read], eax                            ; salvando o descritor de leitura
+  mov [descitor_leitura], eax                           ; salvando o descritor de leitura
 
                                                         ; Leitura do arquivo
   mov eax, 3                                            ; sys_read (eax = 3 representa sys_read em x86 linux 32bits)
-  mov ebx, [descriptor_read]                            ; descritor de leitura do arquivo
+  mov ebx, [descitor_leitura]                           ; descritor de leitura do arquivo
   mov ecx, buffer                                       ; leitura no buffer
   mov edx, len                                          ; lê 'len' bytes
   int 0x80                                              ; lê 'len' bytes para o buffer do arquivo
@@ -32,45 +32,45 @@ _start:
                                                         ; Conversão dos caracteres para maiúscula no buffer
   xor ecx, ecx                                          ; limpa ECX para o contador do loop
 
-convert_loop:
+loop_conversao:
   cmp byte [buffer + ecx], 0                            ; verifica se chegou no fim da string com o terminador nulo (byte 0)
-  je end_convert_loop                                   ; pula pra end_convert_loop se for igual a zero a comparação acima
+  je finalizar_loop_conversao                           ; pula pra finalizar_loop_conversao se for igual a zero a comparação acima
 
   mov al, byte [buffer + ecx]                           ; carrega o char no registrador AL
   cmp al, 'a'                                           ; compara com o char 'a'
-  jl skip_convert                                       ; se for menor que 'a' (97), não realiza conversão
+  jl ignorar_conversao                                  ; se for menor que 'a' (97), não realiza conversão
   cmp al, 'z'                                           ; compara com o char 'z'
-  jg skip_convert                                       ; se for maior que 'z' (122), não realiza conversão
+  jg ignorar_conversao                                  ; se for maior que 'z' (122), não realiza conversão
 
   sub byte [buffer + ecx], 32                           ; subtrai 32 do valor ascii do caracter (mesma coisa que transformar pra uppercase)
 
-skip_convert:
+ignorar_conversao:
   inc ecx                                               ; move pro próximo caracter
-  jmp convert_loop                                      ; repete o loop
+  jmp loop_conversao                                    ; repete o loop
 
-end_convert_loop:
+finalizar_loop_conversao:
                                                         ; Fechamento do arquivo depois de ler tudo
   mov eax, 6                                            ; sys_close (eax = 6 representa sys_close em x86 linux 32bits)
-  mov ebx, [descriptor_read]                            ; descritor de escrita do arquivo
+  mov ebx, [descitor_leitura]                           ; descritor de escrita do arquivo
   int 0x80                                              ; Fechamento do arquivo depois de ler tudo
 
                                                         ; Reabre o arquivo para leitura
   mov eax, 5                                            ; sys_open (eax = 5 representa sys_open em x86 linux 32bits)
-  mov ebx, file                                         ; nome do arquivo
+  mov ebx, arquivo                                      ; nome do arquivo
   mov ecx, 1                                            ; O_WRONLY
   int 0x80                                              ; abre o arquivo com permissão de 'write only' (1 da linha acima)
 
-  mov [descriptor_write], eax                           ; salvando o descritor de escrita
+  mov [descritor_escrita], eax                          ; salvando o descritor de escrita
 
                                                         ; Sobrescreve o arquivo com o novo conteúdo pós aplicação do filtro
   mov eax, 4                                            ; sys_write
-  mov ebx, [descriptor_write]                           ; descritor de escrita do arquivo
+  mov ebx, [descritor_escrita]                          ; descritor de escrita do arquivo
   mov ecx, buffer                                       ; leitura no buffer
   int 0x80                                              ; escreve no arquivo o conteúdo modificado
 
                                                         ; Fechamento do arquivo após escrita
   mov eax, 6                                            ; sys_close (eax = 6 representa sys_close em x86 linux 32bits)
-  mov ebx, [descriptor_write]                           ; descritor de escrita do arquivo
+  mov ebx, [descritor_escrita]                          ; descritor de escrita do arquivo
   int 0x80                                              ; fechamento do arquivo após escrita
 
                                                         ; Saída do programa
