@@ -1,79 +1,79 @@
 section .data
-  file db "text.txt", 0 ; filename ends with '\0' byte
+  file db "text.txt", 0                                 ; arquivo termina com o byte '\0'
 
 section .bss
-  descriptor_read resb 4 ; memory for storing descriptor for reading
-  descriptor_write resb 4 ; memory for storing descriptor for writing
-  buffer resb 1024
-  len equ 1024
+  descriptor_read resb 4                                ; memória pra guardar descritor de leitura
+  descriptor_write resb 4                               ; memória pra guardar descritor de escrita
+  buffer resb 1024                                      ; reserva 1024 bytes de memória para o buffer (reb = reserve bytes)
+  len equ 1024                                          ; define len como 1024 (equ = equates)
 
 section .text
 
 global _start
 
 _start:
-  ; Open file for reading
-  mov eax, 5 ; sys_open
-  mov ebx, file ; filename
-  mov ecx, 0 ; O_RDONLY
-  int 0x80 ; open filename for read only
+                                                        ; Abrindo arquivo pra leitura
+  mov eax, 5                                            ; sys_open (eax = 5 representa sys_open em x86 linux 32bits)
+  mov ebx, file                                         ; nome do arquivo
+  mov ecx, 0                                            ; O_RDONLY
+  int 0x80                                              ; abre o arquivo com permissão de 'read only' (0 da linha acima)
 
-  mov [descriptor_read], eax ; storing the read descriptor
+  mov [descriptor_read], eax                            ; salvando o descritor de leitura
 
-  ; Read from the file
-  mov eax, 3 ; sys_read
-  mov ebx, [descriptor_read] ; file descriptor for reading
-  mov ecx, buffer ; read to buffer
-  mov edx, len ; read len bytes
-  int 0x80 ; read len bytes to buffer from file
+                                                        ; Leitura do arquivo
+  mov eax, 3                                            ; sys_read (eax = 3 representa sys_read em x86 linux 32bits)
+  mov ebx, [descriptor_read]                            ; descritor de leitura do arquivo
+  mov ecx, buffer                                       ; leitura no buffer
+  mov edx, len                                          ; lê 'len' bytes
+  int 0x80                                              ; lê 'len' bytes para o buffer do arquivo
 
-  mov edx, eax ; storing count of read bytes to edx
+  mov edx, eax                                          ; salvando a contagem de bytes de leitura em edx
 
-  ; Convert characters to uppercase in the buffer
-  xor ecx, ecx ; Clear ECX for the loop counter
+                                                        ; Conversão dos caracteres para maiúscula no buffer
+  xor ecx, ecx                                          ; limpa ECX para o contador do loop
+
 convert_loop:
-  cmp byte [buffer + ecx], 0 ; Check for end of string (null terminator)
-  je end_convert_loop
+  cmp byte [buffer + ecx], 0                            ; verifica se chegou no fim da string com o terminador nulo (byte 0)
+  je end_convert_loop                                   ; pula pra end_convert_loop se for igual a zero a comparação acima
 
-  mov al, byte [buffer + ecx] ; Load a character into AL
-  cmp al, 'a' ; Compare with lowercase 'a'
-  jl skip_convert ; If less than 'a', skip conversion
-  cmp al, 'z' ; Compare with lowercase 'z'
-  jg skip_convert ; If greater than 'z', skip conversion
+  mov al, byte [buffer + ecx]                           ; carrega o char no registrador AL
+  cmp al, 'a'                                           ; compara com o char 'a'
+  jl skip_convert                                       ; se for menor que 'a' (97), não realiza conversão
+  cmp al, 'z'                                           ; compara com o char 'z'
+  jg skip_convert                                       ; se for maior que 'z' (122), não realiza conversão
 
-  sub byte [buffer + ecx], 32 ; Convert lowercase to uppercase by subtracting 32 (ASCII difference)
+  sub byte [buffer + ecx], 32                           ; subtrai 32 do valor ascii do caracter (mesma coisa que transformar pra uppercase)
 
 skip_convert:
-  inc ecx ; Move to the next character
-  jmp convert_loop ; Repeat the loop
+  inc ecx                                               ; move pro próximo caracter
+  jmp convert_loop                                      ; repete o loop
 
 end_convert_loop:
+                                                        ; Fechamento do arquivo depois de ler tudo
+  mov eax, 6                                            ; sys_close (eax = 6 representa sys_close em x86 linux 32bits)
+  mov ebx, [descriptor_read]                            ; descritor de escrita do arquivo
+  int 0x80                                              ; Fechamento do arquivo depois de ler tudo
 
-  ; Close the file after reading
-  mov eax, 6 ; sys_close
-  mov ebx, [descriptor_read] ; file descriptor for reading
-  int 0x80 ; close the file after reading
+                                                        ; Reabre o arquivo para leitura
+  mov eax, 5                                            ; sys_open (eax = 5 representa sys_open em x86 linux 32bits)
+  mov ebx, file                                         ; nome do arquivo
+  mov ecx, 1                                            ; O_WRONLY
+  int 0x80                                              ; abre o arquivo com permissão de 'write only' (1 da linha acima)
 
-  ; Reopen the file for writing
-  mov eax, 5 ; sys_open
-  mov ebx, file ; filename
-  mov ecx, 1 ; O_WRONLY
-  int 0x80 ; open filename for write only
+  mov [descriptor_write], eax                           ; salvando o descritor de escrita
 
-  mov [descriptor_write], eax ; storing the write descriptor
+                                                        ; Sobrescreve o arquivo com o novo conteúdo pós aplicação do filtro
+  mov eax, 4                                            ; sys_write
+  mov ebx, [descriptor_write]                           ; descritor de escrita do arquivo
+  mov ecx, buffer                                       ; leitura no buffer
+  int 0x80                                              ; escreve no arquivo o conteúdo modificado
 
-  ; Write the modified content back to the file
-  mov eax, 4 ; sys_write
-  mov ebx, [descriptor_write] ; file descriptor for writing
-  mov ecx, buffer ; from buffer
-  int 0x80 ; write to the file with modified content
+                                                        ; Fechamento do arquivo após escrita
+  mov eax, 6                                            ; sys_close (eax = 6 representa sys_close em x86 linux 32bits)
+  mov ebx, [descriptor_write]                           ; descritor de escrita do arquivo
+  int 0x80                                              ; fechamento do arquivo após escrita
 
-  ; Close the file after writing
-  mov eax, 6 ; sys_close
-  mov ebx, [descriptor_write] ; file descriptor for writing
-  int 0x80 ; close the file after writing
-
-  ; Exit the program
-  mov eax, 1 ; sys_exit
-  xor ebx, ebx ; exit status
-  int 0x80 ; exit the program
+                                                        ; Saída do programa
+  mov eax, 1                                            ; sys_exit
+  xor ebx, ebx                                          ; status de saída (exit status)
+  int 0x80                                              ; saída do programa
