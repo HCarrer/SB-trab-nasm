@@ -48,8 +48,8 @@ section   .text
 global    _start
 
 _start:
-    mov eax, 32                      ; move o valor do numero de dias para eax
-    mov ebx, [tamanho_semana]                      ; move o tamanho de uma semana para ebx
+    mov eax, 32                     ; move o valor do numero de dias para eax
+    mov ebx, [tamanho_semana]       ; move o tamanho de uma semana para ebx
 
     div ebx                         ; divide ebx por eax, sendo que o eax recebe quociente e edx recebe o resto 
 
