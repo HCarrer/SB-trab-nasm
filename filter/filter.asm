@@ -50,12 +50,12 @@ ignorar_conversao:
 
 finalizar_loop_conversao:
                                                         ; Fechamento do arquivo depois de ler tudo
-  mov eax, 6                                            ; sys_close (eax = 6 representa sys_close em x86 linux 32bits)
+  mov eax, 6                                            ; define eax como a chamada 'sys_close' do sistema
   mov ebx, [descitor_leitura]                           ; descritor de escrita do arquivo
   int 0x80                                              ; Fechamento do arquivo depois de ler tudo
 
                                                         ; Reabre o arquivo para leitura
-  mov eax, 5                                            ; sys_open (eax = 5 representa sys_open em x86 linux 32bits)
+  mov eax, 5                                            ; define eax como a chamada 'sys_open' do sistema
   mov ebx, arquivo                                      ; nome do arquivo
   mov ecx, 1                                            ; O_WRONLY
   int 0x80                                              ; abre o arquivo com permissão de 'write only' (1 da linha acima)
@@ -69,11 +69,11 @@ finalizar_loop_conversao:
   int 0x80                                              ; escreve no arquivo o conteúdo modificado
 
                                                         ; Fechamento do arquivo após escrita
-  mov eax, 6                                            ; sys_close (eax = 6 representa sys_close em x86 linux 32bits)
+  mov eax, 6                                            ; define eax como a chamada 'sys_close' do sistema
   mov ebx, [descritor_escrita]                          ; descritor de escrita do arquivo
   int 0x80                                              ; fechamento do arquivo após escrita
 
                                                         ; Saída do programa
-  mov eax, 1                                            ; sys_exit
+  mov eax, 1                                            ; define eax como a chamada 'sys_exit' do sistema
   xor ebx, ebx                                          ; status de saída (exit status)
-  int 0x80                                              ; saída do programa
+  int 0x80                                              ; realiza a chamada no sistema (sys_exit)
