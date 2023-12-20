@@ -33,6 +33,7 @@
 %endmacro
 
 section   .data
+    ;domingo = label / db = defined byte / "Domingo" = string literal em ASCII / 0xA = newLine ASCII em hexadecimal / 0 = terminador nulo
     domingo db "Domingo", 0xA, 0    ; define a string "Domingo" com uma linha e um terminador nulo (byte 0)
     segunda db "Segunda", 0xA, 0    ; define a string "Segunda" com uma linha e um terminador nulo (byte 0)
     terca db "Terca", 0xA, 0        ; define a string "Terca" com uma linha e um terminador nulo (byte 0)

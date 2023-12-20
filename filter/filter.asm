@@ -2,7 +2,7 @@ section .data
   arquivo db "text.txt", 0                              ; arquivo termina com o byte '\0'
 
 section .bss
-  descitor_leitura resb 4                               ; memória pra guardar descritor de leitura
+  descitor_leitura resb 4                               ; memória pra guardar descritor de leitura (reserva 4 bytes na memoria pra descritor_escrita)
   descritor_escrita resb 4                              ; memória pra guardar descritor de escrita
   buffer resb 1024                                      ; reserva 1024 bytes de memória para o buffer (reb = reserve bytes)
   len equ 1024                                          ; define len como 1024 (equ = equates)
@@ -14,7 +14,7 @@ global _start
 _start:
                                                         ; Abrindo arquivo pra leitura
   mov eax, 5                                            ; sys_open (eax = 5 representa sys_open em x86 linux 32bits)
-  mov ebx, arquivo                                      ; nome do arquivo
+  mov ebx, arquivo                                      ; ebx eh movido para o comeco do arquivo
   mov ecx, 0                                            ; O_RDONLY
   int 0x80                                              ; abre o arquivo com permissão de 'read only' (0 da linha acima)
 
